@@ -7,8 +7,8 @@
 :root {
     --ink: #1c1917;
     --paper: #faf6f0;
-    --accent: #d95d39;
-    --accent-dark: #a8442a;
+    --accent: #635bfd;
+    --accent-dark: #6303bdcd;
     --line: #e3d9c9;
     --text-muted: #6b6459;
     --radius: 4px;
@@ -46,7 +46,7 @@ h1, .brand {
 }
 
 .brand {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     font-weight: 700;
     color: var(--ink);
     text-decoration: none;

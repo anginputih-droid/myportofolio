@@ -16,7 +16,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", ""]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "angin-putih-myportofolio.pws.cs.ui.ac.id"]
 
 PRODUCTION = os.getenv('PRODUCTION', 'False').lower() == 'true'
 
@@ -32,9 +32,6 @@ SECRET_KEY = 'django-insecure-9@9=g(j_!*yu3@-j7@qb&n5ik8!2_cxy^p&*ypg&l&&&fq+jw!
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
