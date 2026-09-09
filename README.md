@@ -36,6 +36,6 @@ Week 1: Static Web with HTML5 and CSS3
 
 ## Assignment 1
 1. Usage of semantic HTML5 element
-Yes, I used semantic HTML5 tags such as <header>, <main>, <section>, <article>, and <footer> to give my static web page a clear structure. It helped me seperate the distinct areas in my portofolio (profile and technical skills) rather than depending solely on generic <div> wrappers for everything. Using <article> tags for individual items
+Yes, I used semantic HTML5 tags such as <header>, <main>, <section>, <article>, and <footer> to give my static web page a clear structure. It helped me seperate the distinct areas in my portofolio (profile and technical skills) rather than depending solely on generic <div> wrappers for everything. Using <article> tags for individual items keeps each piece of content organized on its own, making the code much easier to read and update. Plus, these tags make the code cleaner and help screen readers and search engines understand the page better.
 
 2. Layout challenges in setting up CSS Responsive
