@@ -2,7 +2,6 @@ from django.shortcuts import render
 
 from main.models import Experience
 
-
 def show_main(request):
     context = {
         "name": "Angin Putih Ranulaksmi Tsurayya Hapsoro",
@@ -18,7 +17,7 @@ def show_main(request):
 
 def show_experience(request):
     context = {
-        "name": "Ranu",
+        "name": "Angin Putih Ranulaksmi Tsurayya Hapsoro",
         "experience_list": Experience.objects.all(),
     }
     return render(request, "experience.html", context)
