@@ -4,8 +4,10 @@
 NPM: 2506557936
 Class: KKI**
 
+
 ## Setup Instructions
-1. Close the repository:
+### Assognment 1
+1. Clone the repository:
 git clone https://github.com/anginputih-droid/myportofolio.git
 
 2. Navigate to the project directory:
@@ -25,6 +27,11 @@ python manage.py runserver
 
 7. Access the local host:
 http://127.0.0.1:3000/
+
+
+### Assignment 2
+1. 
+
 
 ## Weekly Progress
 Week 1: Static Web with HTML5 and CSS3
