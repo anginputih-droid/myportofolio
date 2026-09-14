@@ -6,7 +6,6 @@ Class: KKI**
 
 
 ## Setup Instructions
-### Assognment 1
 1. Clone the repository:
 git clone https://github.com/anginputih-droid/myportofolio.git
 
@@ -29,20 +28,43 @@ python manage.py runserver
 http://127.0.0.1:3000/
 
 
-### Assignment 2
-1. 
-
-
 ## Weekly Progress
-Week 1: Static Web with HTML5 and CSS3
+### Week 1: Static Web with HTML5 and CSS3
 - Setting up the base Django project and framework following the tutorial.
 - Built the fundamental HTML5 structure, utilizing semantic tags like '<section>' and '<article>'.
 - Implemented custom CSS3 styling, including Flexbox and CSS Grid, to ensure the page is fully responsive for both desktop and mobile.
 - Added hover animation and dropdown.
 - Added other datas for my personal info.
 
-## Assignment 1
-1. Usage of semantic HTML5 element
+### Week 2: Implementing Model-View-Template (MVT) in Django
+
+
+### Assignment 1
+**1. Usage of semantic HTML5 element**
 Yes, I used semantic HTML5 tags such as <header>, <main>, <section>, <article>, and <footer> to give my static web page a clear structure. It helped me seperate the distinct areas in my portofolio (profile and technical skills) rather than depending solely on generic <div> wrappers for everything. Using <article> tags for individual items keeps each piece of content organized on its own, making the code much easier to read and update. Plus, these tags make the code cleaner and help screen readers and search engines understand the page better.
 
-2. Layout challenges in setting up CSS Responsive
+**2. Layout challenges in setting up CSS Responsive**
+
+
+### Assignment 2
+**1. Explain what happens when a user opens the new portofolio page, starting from the request received by the project until the data appears in the browser:**
+When a user requests the new portofolio page, like the projects URL, their browser sends a HTTP request to the server. The project's `urls.py` receives it and redirects it to the app's `urls.py`, which finds the exact URL match and routes the request to a specific view.
+
+The view acts as the central control hub. To gather any necessary background data, like options for a dropdown menu, it asks the model, which is the interface for the database.
+
+The view then passes this data and an empty portfolio form to the template. The template acts as an HTML blueprint, visually structuring the raw data into a complete web page. Finally, the view wraps this finished HTML into an HTTP response and sends it back to the user's browser, where the page is displayed.
+
+**2. Why should the data for the new portfolio section be stored in a model instead of being written directly in the template?**
+It really all comes down to keeping the application dynamic by separating the raw content from the presentation layer. If I were to hardcode everything directly into the HTML template, adding a new project means opening the code editor, copying a block of markup, risking a missing closing tag that breaks the visual layout, and pushing a whole new Git commit. By storing data in a database model instead, the HTML acts as a dumb, reusable skeleton, which makes maintenance completely effortless. Down the line, I can just log into a backend admin panel and fill out a form to update the database directly, and the live site updates automatically without anyone ever needing to rewrite or redeploy the raw code.
+
+**3. What is the difference between makemigrations and migrate in Django?**
+- The makemigrations command inspects any changes made to my Django models and generates a migration file, which acts as a blueprint or a set of instructions for updating the database schema. In contrast, the migrate command takes those generated instructions and executes the necessary SQL commands to physically apply the structural changes to my database.
+
+- For example, if you add a new status field to an existing Project model, you must first run makemigrations to create the instructions for the new column, and then run migrate to actually insert that column into the database table.
+
+
+**AI Usage Disclosure:** I used Gemini to help me understand, check if what I am doing is right or not, and check if there is any error.
+
+- Prompt Strategy: I asked Gemini to kinda tell me what to do on the assignment at first, even though i know i just need to follow the tutorial 2 but change a few small things to fit the new section I'm adding. I still asked to make sure i wasn't wrong. I also ask AI to check if my code is right and doesn't have any errors a few times.
+
+- AI Chat Log: https://share.gemini.google/jkWGEbCDJspv
