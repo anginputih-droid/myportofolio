@@ -39,6 +39,12 @@ http://127.0.0.1:3000/
 ### Week 2: Implementing Model-View-Template (MVT) in Django
 
 
+### Week 3: Form & Data Delivery
+- Refactored all my HTML files to inherit from the `base.html` skeleton template for shared elements like the navbar.
+- Built a Django `ModelForm` to easily add and update my portfolio.
+- Implemented a secure delete function protected by a confirmation modal.
+- Create a JSON endpoint to serve serialized my data instead of rendering raw HTML.
+
 ### Assignment 1
 **1. Usage of semantic HTML5 element**
 Yes, I used semantic HTML5 tags such as <header>, <main>, <section>, <article>, and <footer> to give my static web page a clear structure. It helped me seperate the distinct areas in my portofolio (profile and technical skills) rather than depending solely on generic <div> wrappers for everything. Using <article> tags for individual items keeps each piece of content organized on its own, making the code much easier to read and update. Plus, these tags make the code cleaner and help screen readers and search engines understand the page better.
@@ -80,3 +86,8 @@ JSON is usually preferred because it's smaller in file size and much easier to r
 **3. Explain the flow that occurs when you use a view function to return your portfolio data in JSON format. Why do we need to perform the serialization process on Django models before returning the data?**
 When a user's browser asks for the JSON data, the view function receives that request and asks the database for the right information (like all my projects). However, the database gives us Python objects, and we can't send complex Python code directly over the internet. That's where "serialization" comes in, it translates those Python objects into a simple, standard text format (JSON) that can travel safely across the web. Once translated, the view packages this text up and sends it back to the browser, which can easily understand and display it.
 
+**AI Usage Disclosure:** I barely used AI for this assignment, because I'm starting to understand the Django MVT flow.
+
+**- Prompt Strategy:** I only used AI to help me if I have an error and I don't know how to fix it.
+**- Limitations & Manual Fixes:** I manually handled writing the `ModelForm`, creating the CRUD views, implementing the JSON, and refactoring all of my HTML files to extend the `base.html` skeleton.
+**AI Chat Log:** https://share.gemini.google/9VCgGlcNE5OM
