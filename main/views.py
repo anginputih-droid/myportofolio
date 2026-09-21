@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from main.models import Experience, Project
-from main.forms import ProjectForm
+from main.forms import ProjectForm, ExperienceForm
 from django.core import serializers
 from django.http import HttpResponse
 
@@ -51,7 +51,7 @@ def create_project(request):
 
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "Proyek baru berhasil ditambahkan!")
+        messages.success(request, "New Project has been added!")
         return redirect("main:show_projects")
 
     context = {
@@ -77,7 +77,22 @@ def delete_project(request, project_id):
 
     if request.method == "POST":
         project.delete()
-        messages.success(request, "Project berhasil dihapus!")
+        messages.success(request, "Project successfully deleted!")
         return redirect("main:show_projects")
 
     return redirect("main:show_projects")
+
+
+def create_experience(request):
+    form = ExperienceForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        form.save()
+        messages.success(request, "New Project has been added!")
+        return redirect("main:show_experience")
+
+    context = {
+        "name": "Ranu",
+        "form": form,
+    }
+    return render(request, "experience_form.html", context)
