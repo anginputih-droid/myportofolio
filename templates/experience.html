@@ -4,35 +4,54 @@
 {% endblock meta %}
 {% block content %}
     <main>
-    <section class="experience-section" id="experience">
-        <div class="container">
-            <p class="section-kicker">My journey so far</p>
-            <h1>Experience</h1>
-
-            <div class="experience-grid">
-                {% for experience in experience_list %}
-                    <article class="experience-card">
-                        <span class="experience-category">
-                            {{ experience.category }}
-                        </span>
-                        <h2>{{ experience.title }}</h2>
-                        <p class="experience-description">
-                            {{ experience.description }}
-                        </p>
-
-                        {% if experience.is_ongoing %}
-                            <p class="experience-status">Ongoing</p>
+        <section class="experience-section" id="experience">
+            <div class="container">
+                <p class="section-kicker">My journey so far</p>
+                <div class="project-header">
+                    <h1>Experience</h1>
+                    <a href="{% url 'main:create_experience' %}"
+                       class="button project-add-button">
+                        <span aria-hidden="true">+</span>
+                        Add Experience
+                    </a>
+                </div>
+                <form method="get"
+                      action="{% url 'main:show_experience' %}"
+                      class="project-search">
+                    <input type="search"
+                           name="title"
+                           value="{{ title_query }}"
+                           placeholder="Search experience name"
+                           class="project-search__input"
+                           aria-label="Search experience name">
+                    <button type="submit" class="button">Search</button>
+                </form>
+                <div class="experience-grid project-grid">
+                    {% for experience in experience_list %}
+                        <article class="experience-card">
+                            {% if experience.thumbnail %}
+                                <img src="{{ experience.thumbnail }}"
+                                     alt="Picture {{ experience.title }}"
+                                     class="project-image">
+                            {% endif %}
+                            <h2>{{ experience.title }}</h2>
+                            <span class="experience-category">{{ experience.category }}</span>
+                            <p class="experience-description">{{ experience.description }}</p>
+                            <div class="project-card-actions">
+                                <div class="project-actions">
+                                    {% include "components/experience_delete_modal.html" with experience=experience %}
+                                </div>
+                            </div>
+                        </article>
+                    {% empty %}
+                        {% if title_query %}
+                            <p class="empty-state">There is no experience with that name.</p>
                         {% else %}
-                            <p class="experience-status">Completed</p>
+                            <p class="empty-state">No experiences have been added yet.</p>
                         {% endif %}
-                    </article>
-                {% empty %}
-                    <p class="empty-state">
-                        No experience has been added yet.
-                    </p>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
 {% endblock content %}
