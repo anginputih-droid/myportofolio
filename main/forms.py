@@ -1,5 +1,5 @@
 from django import forms
-from main.models import Project
+from main.models import Project, Experience
 from django.forms import TextInput, Textarea, URLInput, Select
 
 class ProjectForm(forms.ModelForm):
@@ -14,7 +14,7 @@ class ProjectForm(forms.ModelForm):
         ]
 
         labels = {
-            "title": "Project Name",
+            "title": "Project Title",
             "description": "Project Description",
             "tech_stack": "Technology That Is Used",
             "project_url": "URL Project",
@@ -55,7 +55,7 @@ class ProjectForm(forms.ModelForm):
 # Add Experience Form
 class ExperienceForm(forms.ModelForm):
     class Meta:
-        model = Project
+        model = Experience
         fields = [
             "title",
             "description",
