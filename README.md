@@ -88,6 +88,6 @@ When a user's browser asks for the JSON data, the view function receives that re
 
 **AI Usage Disclosure:** I barely used AI for this assignment, because I'm starting to understand the Django MVT flow.
 
-**- Prompt Strategy:** I only used AI to help me if I have an error and I don't know how to fix it.
-**- Limitations & Manual Fixes:** I manually handled writing the `ModelForm`, creating the CRUD views, implementing the JSON, and refactoring all of my HTML files to extend the `base.html` skeleton.
-**AI Chat Log:** https://share.gemini.google/9VCgGlcNE5OM
+- **Prompt Strategy:** I only used AI to help me if I have an error and I don't know how to fix it.
+- **Limitations & Manual Fixes:** I manually handled writing the `ModelForm`, creating the CRUD views, implementing the JSON, and refactoring all of my HTML files to extend the `base.html` skeleton.
+- **AI Chat Log:** https://share.gemini.google/9VCgGlcNE5OM
