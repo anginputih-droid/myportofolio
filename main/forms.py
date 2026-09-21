@@ -8,13 +8,17 @@ class ProjectForm(forms.ModelForm):
         fields = [
             "title",
             "description",
+            "tech_stack",
+            "project_url",
             "thumbnail",
         ]
 
         labels = {
-            "title": "Nama Proyek",
-            "description": "Deskripsi Proyek",
-            "thumbnail": "URL Gambar Proyek",
+            "title": "Project Name",
+            "description": "Project Description",
+            "tech_stack": "Technology That Is Used",
+            "project_url": "URL Project",
+            "thumbnail": "URL Project Picture",
         }
 
         widgets = {
@@ -28,6 +32,16 @@ class ProjectForm(forms.ModelForm):
                 attrs={
                     "placeholder": "Tell us about your project",
                     "rows": 3,
+                }
+            ),
+            "tech_stack": TextInput(
+                attrs={
+                    "placeholder": "Python, HTML, CSS, Java, Django",
+                }
+            ),
+            "project_url": URLInput(
+                attrs={
+                    "placeholder": "https://github.com/anginputih-droid",
                 }
             ),
             "thumbnail": URLInput(

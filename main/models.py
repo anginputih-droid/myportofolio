@@ -48,6 +48,8 @@ class Project(models.Model):
         choices=PROJECT_CHOICES,
         default="personal",
     )
+    tech_stack = models.CharField(max_length=255, default="")
+    project_url = models.URLField(blank=True)
     thumbnail = models.URLField(blank=True, null=True)
     started_at = models.DateTimeField(auto_now_add=True)
     ended_at = models.DateTimeField(blank=True, null=True)
