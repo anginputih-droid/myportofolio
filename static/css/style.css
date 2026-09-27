@@ -58,11 +58,11 @@ h1, .brand {
     gap: 2rem;
 }
 
-.site-header nav a {
+.site-header nav a, .nav-user {
     color: var(--ink);
     text-decoration: none;
     font-size: 0.95rem;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 
@@ -714,4 +714,28 @@ h1, .brand {
 
 .button-secondary {
     background: var(--ink);
+}
+
+
+/* Star Button */
+.star-form {
+    display: inline;
+}
+
+.button-star {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: var(--ink);
+}
+
+.button-star.is-starred {
+    background: var(--accent);
+}
+
+.star-count {
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.25);
+    font-size: 0.8rem;
 }
