@@ -41,6 +41,7 @@ def show_experience(request):
         "name": "Ranu",
         "experience_list": experience,
         "title_query": title_query,
+        "le_editor": le_editor(request.user)
     }
     return render(request, "experience.html", context)
 
@@ -59,6 +60,8 @@ def show_projects(request):
         "name": "Ranu",
         "project_list": projects,
         "title_query": title_query,
+        "le_editor": le_editor(request.user)
+
     }
     return render(request, "project.html", context)
 
@@ -79,6 +82,18 @@ def create_project(request):
         "name": "Ranu",
         "form": form,
     }
+    return render(request, "projects_form.html", context)
+
+
+@login_required(login_url="/login/")
+def edit_project(request, project_id):
+    if not (request.user.is_superuser or le_editor(request.user)):
+        raise PermissionDenied
+
+    project = get_object_or_404(Project, pk=project_id)
+    form = ProjectForm(request.POST or None, instance=project)
+
+    context = {"name": "Ranu", "form": form, "project": project}
     return render(request, "projects_form.html", context)
 
 
@@ -129,6 +144,18 @@ def create_experience(request):
     return render(request, "experience_form.html", context)
 
 
+@login_required(login_url="/login/")
+def edit_experience(request, experience_id):
+    if not (request.user.is_superuser or le_editor(request.user)):
+        raise PermissionDenied
+
+    experience = get_object_or_404(Experience, pk=experience_id)
+    form = ExperienceForm(request.POST or None, instance=experience)
+
+    context = {"name": "Ranu", "form": form, "experience": experience}
+    return render(request, "experience_form.html", context)
+
+
 def get_experience_json(request):
     title_query = request.GET.get("title", "").strip()
     experience = Experience.objects.all()
@@ -136,7 +163,10 @@ def get_experience_json(request):
     if title_query:
         experience = experience.filter(title__icontains=title_query)
 
-    experience_json = serializers.serialize("json", experience)
+    experience_json = serializers.serialize(
+        "json", experience, use_natural_foreign_keys=True
+    )
+
     return HttpResponse(experience_json, content_type="application/json")
 
 
@@ -218,3 +248,7 @@ def toggle_star_experience(request, experience_id):
             experience.starred_by.add(request.user)
 
     return redirect("main:show_experience")
+
+
+def le_editor(user):
+    return user.is_authenticated and user.groups.filter(name="Editor").exists()
