@@ -82,6 +82,18 @@ def create_project(request):
     return render(request, "projects_form.html", context)
 
 
+@login_required(login_url="/login/")
+def edit_project(request, project_id):
+    if not (request.user.is_superuser or le_editor(request.user)):
+        raise PermissionDenied
+
+    project = get_object_or_404(Project, pk=project_id)
+    form = ProjectForm(request.POST or None, instance=project)
+
+    context = {"name": "Ranu", "form": form, "project": project}
+    return render(request, "projects_form.html", context)
+
+
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.all()
@@ -129,6 +141,18 @@ def create_experience(request):
     return render(request, "experience_form.html", context)
 
 
+@login_required(login_url="/login/")
+def edit_experience(request, experience_id):
+    if not (request.user.is_superuser or le_editor(request.user)):
+        raise PermissionDenied
+
+    experience = get_object_or_404(Project, pk=experience_id)
+    form = ExperienceForm(request.POST or None, instance=experience)
+
+    context = {"name": "Ranu", "form": form, "experience": experience}
+    return render(request, "experience_form.html", context)
+
+
 def get_experience_json(request):
     title_query = request.GET.get("title", "").strip()
     experience = Experience.objects.all()
@@ -139,7 +163,7 @@ def get_experience_json(request):
     experience_json = serializers.serialize(
         "json", experience, use_natural_foreign_keys=True
     )
-    
+
     return HttpResponse(experience_json, content_type="application/json")
 
 
@@ -221,3 +245,7 @@ def toggle_star_experience(request, experience_id):
             experience.starred_by.add(request.user)
 
     return redirect("main:show_experience")
+
+
+def le_editor(user):
+    return user.is_authenticated and user.groups.filter(name="Editor").exists()
