@@ -91,3 +91,11 @@ When a user's browser asks for the JSON data, the view function receives that re
 - **Prompt Strategy:** I only used AI to help me if I have an error and I don't know how to fix it.
 - **Limitations & Manual Fixes:** I manually handled writing the `ModelForm`, creating the CRUD views, implementing the JSON, and refactoring all of my HTML files to extend the `base.html` skeleton.
 - **AI Chat Log:** https://share.gemini.google/9VCgGlcNE5OM
+
+
+### Assignment 4
+**AI Usage Disclosure:** I used Gemini to help implement the Editor role for Individual Assignment 4 and debug why the Edit button wasn't appearing for an editor account.
+
+- **Prompt Strategy:** I began by giving Gemini the full assignment brief and the Tutorial 04 text so it had the exact requirements and the conventions my project already followed. When something didn't work, I pasted my real `views.py` and the `html` that's involved with the error along with a screenshot of the problem, so the answer was based on my actual code and not generic examples.
+- **Limitations & Manual Fixes:** The AI provided the backend logic and the `editor` helper function, but I manually integrate the logic into my views and apply the conditional checks within my HTML. I manually handled writing the `edit_experience` and `edit_project`.
+- **AI Chat Log:** https://share.gemini.google/qTaMxJ09qqUG
