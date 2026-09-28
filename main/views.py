@@ -41,6 +41,7 @@ def show_experience(request):
         "name": "Ranu",
         "experience_list": experience,
         "title_query": title_query,
+        "le_editor": le_editor(request.user)
     }
     return render(request, "experience.html", context)
 
@@ -59,6 +60,8 @@ def show_projects(request):
         "name": "Ranu",
         "project_list": projects,
         "title_query": title_query,
+        "le_editor": le_editor(request.user)
+
     }
     return render(request, "project.html", context)
 
@@ -146,7 +149,7 @@ def edit_experience(request, experience_id):
     if not (request.user.is_superuser or le_editor(request.user)):
         raise PermissionDenied
 
-    experience = get_object_or_404(Project, pk=experience_id)
+    experience = get_object_or_404(Experience, pk=experience_id)
     form = ExperienceForm(request.POST or None, instance=experience)
 
     context = {"name": "Ranu", "form": form, "experience": experience}
