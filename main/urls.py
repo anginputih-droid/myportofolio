@@ -4,7 +4,7 @@ from main.views import (show_main, show_experience, show_projects, create_projec
                         get_projects_json, delete_project, create_experience,
                         get_experience_json, delete_experience, register, login_user,
                         logout_user, toggle_star_project, toggle_star_experience,
-                        edit_project, edit_experience)
+                        edit_project, edit_experience, create_project_ajax)
 
 app_name = "main"
 
@@ -33,5 +33,6 @@ urlpatterns = [
         toggle_star_experience, 
         name="toggle_star_experience",
         ),
+    path("projects/add-ajax/", create_project_ajax, name="create_project_ajax"),
     
 ]
