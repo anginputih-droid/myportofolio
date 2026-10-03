@@ -49,45 +49,6 @@
                 <!-- Project Grid -->
                 <div id="grid" class="experience-grid project-grid hide"></div>
 
-                <div class="experience-grid project-grid">
-                    {% for project in project_list %}
-                        <article class="experience-card">
-                            {% if project.thumbnail %}
-                                <img src="{{ project.thumbnail }}"
-                                     alt="Picture {{ project.title }}"
-                                     class="project-image">
-                            {% endif %}
-                            <h2>{{ project.title }}</h2>
-                            <span class="experience-category">{{ project.tech_stack }}</span>
-                            <p class="experience-description">{{ project.description }}</p>
-                            <div class="project-card-actions">
-                                <div class="project-actions">
-                                    {% if project.project_url %}
-                                        <a href="{{ project.project_url }}" class="button">See Project</a>
-                                    {% endif %}
-
-                                    {% include "components/project_star.html" with project=project %}
-                                    
-                                    {% if user.is_superuser or le_editor %}
-                                        <a href="{% url 'main:edit_project' project.id %}" class="button button-secondary">
-                                            Edit
-                                        </a>
-                                    {% endif %}
-
-                                    {% if user.is_superuser %}
-                                        {% include "components/project_delete_modal.html" with project=project %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </article>
-                    {% empty %}
-                        {% if title_query %}
-                            <p class="empty-state">There is no project with that name.</p>
-                        {% else %}
-                            <p class="empty-state">No projects have been added yet.</p>
-                        {% endif %}
-                    {% endfor %}
-                </div>
             </div>
         </section>
     </main>
@@ -100,6 +61,7 @@
     // Configuration
     const BASE_PROJECTS_ENDPOINT = "{% url 'main:get_projects_json' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_EDITOR = "{{ le_editor|yesno:'true,false' }}" === "true";
     let projectsAbortController;
 
     // DOM elements
@@ -152,6 +114,11 @@
         const starUrl = "{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', projectId);
 
+        const editUrl = "{% url 'main:edit_project' '00000000-0000-0000-0000-000000000000' %}"
+            .replace('00000000-0000-0000-0000-000000000000', projectId);
+        const editHtml = (IS_SUPERUSER || IS_EDITOR) ? `<a href="${editUrl}" class="button button-secondary">Edit</a>`
+            : '';
+
         const deleteHtml = IS_SUPERUSER 
             ? `<form method="post" action="${deleteUrl}" style="display:inline;">
                 {% csrf_token %}
@@ -173,8 +140,6 @@
             <p class="experience-description">${escapeHtml(project.description)}</p>
             <div class="project-card-actions">
                 <div class="project-actions">
-                    ${urlHtml}
-                    
                     <form method="post" action="${starUrl}" class="star-form">
                         {% csrf_token %}
                         <button type="submit" 
@@ -185,6 +150,10 @@
                             <span class="star-count">${project.star_count}</span>
                         </button>
                     </form>
+
+                    ${editHtml}
+
+                    ${urlHtml}
 
                     ${deleteHtml}
                 </div>

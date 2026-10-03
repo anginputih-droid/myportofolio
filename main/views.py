@@ -28,25 +28,7 @@ def show_main(request):
     return render(request, "index.html", context)
 
 
-def show_experience(request):
-    json_response = get_experience_json(request)
-
-    experience = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    experience = [experience.object for experience in experience]
-    title_query = request.GET.get("title", "").strip()
-
-    context = {
-        "name": "Ranu",
-        "experience_list": experience,
-        "title_query": title_query,
-        "le_editor": le_editor(request.user)
-    }
-    return render(request, "experience.html", context)
-
-
+## Project Section ##
 def show_projects(request):
     title_query = request.GET.get("title", "").strip()
 
@@ -54,27 +36,9 @@ def show_projects(request):
         "name": "Ranu",
         "title_query": title_query,
         "form": ProjectForm(),
+        "le_editor": le_editor(request.user)
     }
     return render(request, "project.html", context)
-
-
-@login_required(login_url="/login/")
-def create_project(request):
-    if not request.user.is_superuser:
-        raise PermissionDenied
-    
-    form = ProjectForm(request.POST or None)
-
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "New Project has been added!")
-        return redirect("main:show_projects")
-
-    context = {
-        "name": "Ranu",
-        "form": form,
-    }
-    return render(request, "projects_form.html", context)
 
 
 @login_required(login_url="/login/")
@@ -155,6 +119,39 @@ def delete_project(request, project_id):
 
 
 @login_required(login_url="/login/")
+def toggle_star_project(request, project_id):
+    project = get_object_or_404(Project, pk=project_id)
+
+    if request.method == "POST":
+        if request.user in project.starred_by.all():
+            project.starred_by.remove(request.user)
+        else:
+            project.starred_by.add(request.user)
+
+    return redirect("main:show_projects")
+
+
+## Experience Section ##
+def show_experience(request):
+    json_response = get_experience_json(request)
+
+    experience = serializers.deserialize(
+        "json",
+        json_response.content.decode("utf-8"),
+    )
+    experience = [experience.object for experience in experience]
+    title_query = request.GET.get("title", "").strip()
+
+    context = {
+        "name": "Ranu",
+        "experience_list": experience,
+        "title_query": title_query,
+        "le_editor": le_editor(request.user)
+    }
+    return render(request, "experience.html", context)
+
+
+@login_required(login_url="/login/")
 def create_experience(request):
     if not request.user.is_superuser:
         raise PermissionDenied
@@ -214,6 +211,20 @@ def delete_experience(request, experience_id):
     return redirect("main:show_experience")
 
 
+@login_required(login_url="/login/")
+def toggle_star_experience(request, experience_id):
+    experience = get_object_or_404(Experience, pk=experience_id)
+
+    if request.method == "POST":
+        if request.user in experience.starred_by.all():
+            experience.starred_by.remove(request.user)
+        else:
+            experience.starred_by.add(request.user)
+
+    return redirect("main:show_experience")
+
+
+## Authentication ##
 def register(request):
     form = UserCreationForm(request.POST or None)
 
@@ -253,31 +264,6 @@ def logout_user(request):
     return response
 
 
-@login_required(login_url="/login/")
-def toggle_star_project(request, project_id):
-    project = get_object_or_404(Project, pk=project_id)
-
-    if request.method == "POST":
-        if request.user in project.starred_by.all():
-            project.starred_by.remove(request.user)
-        else:
-            project.starred_by.add(request.user)
-
-    return redirect("main:show_projects")
-
-
-@login_required(login_url="/login/")
-def toggle_star_experience(request, experience_id):
-    experience = get_object_or_404(Experience, pk=experience_id)
-
-    if request.method == "POST":
-        if request.user in experience.starred_by.all():
-            experience.starred_by.remove(request.user)
-        else:
-            experience.starred_by.add(request.user)
-
-    return redirect("main:show_experience")
-
-
+# Adding Editor
 def le_editor(user):
     return user.is_authenticated and user.groups.filter(name="Editor").exists()
