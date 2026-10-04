@@ -41,16 +41,38 @@ def show_projects(request):
     return render(request, "project.html", context)
 
 
+@require_POST
 @login_required(login_url="/login/")
-def edit_project(request, project_id):
+def edit_project_ajax(request, project_id):
     if not (request.user.is_superuser or le_editor(request.user)):
-        raise PermissionDenied
+        return JsonResponse(
+            {"message": "Permission denied."},
+            status=403,
+        )
 
     project = get_object_or_404(Project, pk=project_id)
-    form = ProjectForm(request.POST or None, instance=project)
+    form = ProjectForm(request.POST, instance=project)
 
-    context = {"name": "Ranu", "form": form, "project": project}
-    return render(request, "projects_form.html", context)
+    if form.is_valid():
+        form.save()
+        return JsonResponse(
+            {"message": "Project updated successfully."},
+            status=200,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
+
+
+# @login_required(login_url="/login/")
+# def edit_project(request, project_id):
+#     if not (request.user.is_superuser or le_editor(request.user)):
+#         raise PermissionDenied
+
+#     project = get_object_or_404(Project, pk=project_id)
+#     form = ProjectForm(request.POST or None, instance=project)
+
+#     context = {"name": "Ranu", "form": form, "project": project}
+#     return render(request, "projects_form.html", context)
 
 
 def get_projects_json(request):
