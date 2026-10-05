@@ -63,18 +63,6 @@ def edit_project_ajax(request, project_id):
     return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
-# @login_required(login_url="/login/")
-# def edit_project(request, project_id):
-#     if not (request.user.is_superuser or le_editor(request.user)):
-#         raise PermissionDenied
-
-#     project = get_object_or_404(Project, pk=project_id)
-#     form = ProjectForm(request.POST or None, instance=project)
-
-#     context = {"name": "Ranu", "form": form, "project": project}
-#     return render(request, "projects_form.html", context)
-
-
 def get_projects_json(request):
     title_query = request.GET.get("title", "").strip()
     projects = Project.objects.prefetch_related('starred_by').all()

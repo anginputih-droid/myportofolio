@@ -53,16 +53,20 @@
         </section>
     </main>
 
-    {% if user.is_superuser %}
+    {% if user.is_superuser or le_editor %}
         {% include "components/project_form_modal.html" %}
     {% endif %}
     
     <script>
     // Configuration
     const BASE_PROJECTS_ENDPOINT = "{% url 'main:get_projects_json' %}";
+    const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
+    const EDIT_PROJECT_BASE_URL = "{% url 'main:edit_project_ajax' '00000000-0000-0000-0000-000000000000' %}";
+
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     const IS_EDITOR = "{{ le_editor|yesno:'true,false' }}" === "true";
     let projectsAbortController;
+    let currentProjectsData = [];
 
     // DOM elements
     const loadingState = document.getElementById('loading');
@@ -71,15 +75,17 @@
     const gridContainer = document.getElementById('grid');
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
+    const projectForm = document.getElementById('project-form');
+    const addProjectModal = document.getElementById("add-project-modal");
     const SEARCH_DEBOUNCE_DELAY = 300;
     let searchDebounceTimer;
 
     // Show/hide page sections
     function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false }) {
-        loadingState.classList.toggle('hide', !showLoading);
-        errorState.classList.toggle('hide', !showError);
-        emptyState.classList.toggle('hide', !showEmpty);
-        gridContainer.classList.toggle('hide', !showGrid);
+        if (loadingState) loadingState.classList.toggle('hide', !showLoading);
+        if (errorState) errorState.classList.toggle('hide', !showError);
+        if (emptyState) emptyState.classList.toggle('hide', !showEmpty);
+        if (gridContainer) gridContainer.classList.toggle('hide', !showGrid);
     }
 
         // Convert special HTML characters into entities so they display as text
@@ -114,9 +120,8 @@
         const starUrl = "{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', projectId);
 
-        const editUrl = "{% url 'main:edit_project_ajax' '00000000-0000-0000-0000-000000000000' %}"
-            .replace('00000000-0000-0000-0000-000000000000', projectId);
-        const editHtml = (IS_SUPERUSER || IS_EDITOR) ? `<a href="${editUrl}" class="button button-secondary">Edit</a>`
+        const editHtml = (IS_SUPERUSER || IS_EDITOR) 
+            ? `<button type="button" class="button button-secondary" onclick="openEditModal('${projectId}')">Edit</button>`
             : '';
 
         const deleteHtml = IS_SUPERUSER 
@@ -164,12 +169,46 @@
         return articleElement;
     }
 
-    function closeProjectModal() {
-        document.getElementById("add-project-modal").hidePopover();
+    const btnAdd = document.querySelector('.project-add-button');
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            if (!projectForm) return;
+            projectForm.reset();
+            projectForm.dataset.mode = "create";
+            delete projectForm.dataset.editId;
+            
+            // Update Modal Text
+            const modalTitle = addProjectModal.querySelector('h1, h2');
+            if (modalTitle) modalTitle.textContent = "Add a New Project";
+            const submitBtn = projectForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = "Add Project";
+        });
     }
 
-    const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
-    const projectForm = document.getElementById('project-form');
+    function openEditModal(projectId) {
+        const item = currentProjectsData.find(p => p.pk === projectId);
+        if (!item) return;
+
+        document.getElementById('id_title').value = item.fields.title;
+        document.getElementById('id_description').value = item.fields.description;
+        document.getElementById('id_tech_stack').value = item.fields.tech_stack;
+        document.getElementById('id_project_url').value = item.fields.project_url || '';
+        document.getElementById('id_thumbnail').value = item.fields.thumbnail || '';
+
+        projectForm.dataset.mode = "edit";
+        projectForm.dataset.editId = projectId;
+
+        const modalTitle = addProjectModal.querySelector('h1, h2');
+        if (modalTitle) modalTitle.textContent = "Edit Project";
+        const submitBtn = projectForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = "Save Changes";
+
+        if (addProjectModal) addProjectModal.showPopover();
+    }
+
+    function closeProjectModal() {
+        if (addProjectModal) addProjectModal.hidePopover();
+    }
 
     // Read a cookie value, used to get the CSRF token
     function getCookie(name) {
@@ -192,10 +231,15 @@
         event.preventDefault();
 
         const submitButton = projectForm.querySelector('button[type="submit"]');
-        submitButton.disabled = true;
+        if (submitButton) submitButton.disabled = true;
+
+        const isEdit = projectForm.dataset.mode === "edit";
+        const targetUrl = isEdit 
+            ? EDIT_PROJECT_BASE_URL.replace('00000000-0000-0000-0000-000000000000', projectForm.dataset.editId)
+            : CREATE_PROJECT_ENDPOINT;
 
         try {
-            const response = await fetch(CREATE_PROJECT_ENDPOINT, {
+            const response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 body: new FormData(projectForm),
@@ -205,19 +249,23 @@
             if (response.ok) {
                 projectForm.reset();
                 closeProjectModal();
-                showToast('Success', 'New project added successfully!', 'success');
-                fetchProjects(searchInput.value.trim());
+                const successMsg = isEdit ? 'Project updated successfully' : 'New project added successfully!';
+                showToast('Success', successMsg, 'success');
+                fetchProjects(searchInput ? searchInput.value.trim() : "");
             } else {
                 const errorMessages = result.errors
                     ? Object.values(result.errors).flat().map(error => error.message)
                     : [result.message || `Something went wrong (status ${response.status}).`];
-                showToast('Failed to add project', errorMessages.join(' '), 'error');
+                const actWord = isEdit ? 'update' : 'add';
+                showToast('Failed to ${actWord} project', errorMessages.join(' '), 'error');
             }
         } catch (error) {
-            console.error('Error adding project:', error);
-            showToast('Failed to add project', 'Could not reach the server. Please try again.', 'error');
+            const errorWord = isEdit ? 'updating' : 'adding';
+            const actionWord = isEdit ? 'update' : 'add';
+            console.error('Error ${errorWord} project:', error);
+            showToast('Failed to ${actionWord} project', 'Could not reach the server. Please try again.', 'error');
         } finally {
-            submitButton.disabled = false;
+            if (submitButton) submitButton.disabled = false;
         }
     }
 
@@ -243,13 +291,14 @@
             if (!response.ok) throw new Error('Failed to fetch data');
 
             const projectData = await response.json();
+            currentProjectsData = projectData;
 
             if (projectData.length === 0) {
                 displayPageSection({ showEmpty: true });
             } else {
                 gridContainer.innerHTML = '';
                 projectData.forEach(item => {
-                    gridContainer.appendChild(buildProjectCardElement(item));
+                    if (gridContainer) gridContainer.appendChild(buildProjectCardElement(item));
                 });
                 displayPageSection({ showGrid: true });
             }
@@ -262,7 +311,7 @@
 
     // Search form event handler
     function searchProjects() {
-        fetchProjects(searchInput.value.trim());
+        if (searchInput) fetchProjects(searchInput.value.trim());
     }
 
     searchInput.addEventListener("input", function() {
@@ -280,6 +329,10 @@
     });
 
     // Start the application
-    fetchProjects(searchInput.value.trim());
+    if (searchInput) {
+        fetchProjects(searchInput.value.trim());
+    } else {
+        fetchProjects("");
+    }
     </script>
 {% endblock content %}
