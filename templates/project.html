@@ -53,16 +53,24 @@
         </section>
     </main>
 
-    {% if user.is_superuser %}
+    {% if user.is_superuser or le_editor %}
         {% include "components/project_form_modal.html" %}
+    {% endif %}
+
+    {% if user.is_superuser %}
+        {% include "components/project_delete_modal.html" %}
     {% endif %}
     
     <script>
     // Configuration
     const BASE_PROJECTS_ENDPOINT = "{% url 'main:get_projects_json' %}";
+    const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
+    const EDIT_PROJECT_BASE_URL = "{% url 'main:edit_project_ajax' '00000000-0000-0000-0000-000000000000' %}";
+
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     const IS_EDITOR = "{{ le_editor|yesno:'true,false' }}" === "true";
     let projectsAbortController;
+    let currentProjectsData = [];
 
     // DOM elements
     const loadingState = document.getElementById('loading');
@@ -71,15 +79,17 @@
     const gridContainer = document.getElementById('grid');
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
+    const projectForm = document.getElementById('project-form');
+    const addProjectModal = document.getElementById("add-project-modal");
     const SEARCH_DEBOUNCE_DELAY = 300;
     let searchDebounceTimer;
 
     // Show/hide page sections
     function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false }) {
-        loadingState.classList.toggle('hide', !showLoading);
-        errorState.classList.toggle('hide', !showError);
-        emptyState.classList.toggle('hide', !showEmpty);
-        gridContainer.classList.toggle('hide', !showGrid);
+        if (loadingState) loadingState.classList.toggle('hide', !showLoading);
+        if (errorState) errorState.classList.toggle('hide', !showError);
+        if (emptyState) emptyState.classList.toggle('hide', !showEmpty);
+        if (gridContainer) gridContainer.classList.toggle('hide', !showGrid);
     }
 
         // Convert special HTML characters into entities so they display as text
@@ -114,16 +124,18 @@
         const starUrl = "{% url 'main:toggle_star_project' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', projectId);
 
-        const editUrl = "{% url 'main:edit_project_ajax' '00000000-0000-0000-0000-000000000000' %}"
-            .replace('00000000-0000-0000-0000-000000000000', projectId);
-        const editHtml = (IS_SUPERUSER || IS_EDITOR) ? `<a href="${editUrl}" class="button button-secondary">Edit</a>`
+        const editHtml = (IS_SUPERUSER || IS_EDITOR) 
+            ? `<button type="button" class="button button-secondary" onclick="openEditModal('${projectId}')">Edit</button>`
             : '';
 
         const deleteHtml = IS_SUPERUSER 
-            ? `<form method="post" action="${deleteUrl}" style="display:inline;">
-                {% csrf_token %}
-                <button type="submit" class="button button-danger" onclick="return confirm('Are you sure you want to delete this project?');">Delete</button>
-            </form>`
+            ? `<p class="experience-status">
+                <button type="button" 
+                        class="button button-danger" 
+                        onclick="openDeleteModal('${projectId}', '${escapeHtml(project.title)}')">
+                    Delete Project
+                </button>
+            </p>`
             : '';
 
         const isStarredClass = project.is_starred ? " is-starred" : "";
@@ -164,12 +176,63 @@
         return articleElement;
     }
 
-    function closeProjectModal() {
-        document.getElementById("add-project-modal").hidePopover();
+    const btnAdd = document.querySelector('.project-add-button');
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            if (!projectForm) return;
+            projectForm.reset();
+            projectForm.dataset.mode = "create";
+            delete projectForm.dataset.editId;
+            
+            // Update Modal Text
+            const modalTitle = addProjectModal.querySelector('h1, h2');
+            if (modalTitle) modalTitle.textContent = "Add a New Project";
+            const submitBtn = projectForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = "Add Project";
+        });
     }
 
-    const CREATE_PROJECT_ENDPOINT = "{% url 'main:create_project_ajax' %}";
-    const projectForm = document.getElementById('project-form');
+    function openEditModal(projectId) {
+        const item = currentProjectsData.find(p => p.pk === projectId);
+        if (!item) return;
+
+        document.getElementById('id_title').value = item.fields.title;
+        document.getElementById('id_description').value = item.fields.description;
+        document.getElementById('id_tech_stack').value = item.fields.tech_stack;
+        document.getElementById('id_project_url').value = item.fields.project_url || '';
+        document.getElementById('id_thumbnail').value = item.fields.thumbnail || '';
+
+        projectForm.dataset.mode = "edit";
+        projectForm.dataset.editId = projectId;
+
+        const modalTitle = addProjectModal.querySelector('h1, h2');
+        if (modalTitle) modalTitle.textContent = "Edit Project";
+        const submitBtn = projectForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = "Save Changes";
+
+        if (addProjectModal) addProjectModal.showPopover();
+    }
+
+    // Open the global delete modal
+    function openDeleteModal(projectId, projectTitle) {
+        const deleteModal = document.getElementById('global-delete-modal');
+        if (!deleteModal) return;
+
+        // 1. Set the project name in the warning text
+        document.getElementById('global-delete-modal-title').textContent = projectTitle;
+
+        // 2. Set the correct URL for the form submission
+        const form = document.getElementById('global-delete-modal-form');
+        const deleteUrlBase = "{% url 'main:delete_project' '00000000-0000-0000-0000-000000000000' %}";
+        form.action = deleteUrlBase.replace('00000000-0000-0000-0000-000000000000', projectId);
+
+        // 3. Open the popover
+        deleteModal.showPopover();
+    }
+
+    function closeProjectModal() {
+        if (addProjectModal) addProjectModal.hidePopover();
+    }
 
     // Read a cookie value, used to get the CSRF token
     function getCookie(name) {
@@ -194,8 +257,13 @@
         const submitButton = projectForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
 
+        const isEdit = projectForm.dataset.mode === "edit";
+        const targetUrl = isEdit 
+            ? EDIT_PROJECT_BASE_URL.replace('00000000-0000-0000-0000-000000000000', projectForm.dataset.editId)
+            : CREATE_PROJECT_ENDPOINT;
+
         try {
-            const response = await fetch(CREATE_PROJECT_ENDPOINT, {
+            const response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 body: new FormData(projectForm),
@@ -205,24 +273,66 @@
             if (response.ok) {
                 projectForm.reset();
                 closeProjectModal();
-                showToast('Success', 'New project added successfully!', 'success');
-                fetchProjects(searchInput.value.trim());
+                const successMsg = isEdit ? 'Project updated successfully' : 'New project added successfully!';
+                showToast('Success', successMsg, 'success');
+                fetchProjects(searchInput ? searchInput.value.trim() : "");
             } else {
                 const errorMessages = result.errors
                     ? Object.values(result.errors).flat().map(error => error.message)
                     : [result.message || `Something went wrong (status ${response.status}).`];
-                showToast('Failed to add project', errorMessages.join(' '), 'error');
+                const actWord = isEdit ? 'update' : 'add';
+                showToast('Failed to ${actWord} project', errorMessages.join(' '), 'error');
             }
         } catch (error) {
-            console.error('Error adding project:', error);
-            showToast('Failed to add project', 'Could not reach the server. Please try again.', 'error');
+            const actWord = isEdit ? 'updating' : 'adding';
+            const actionWord = isEdit ? 'update' : 'add';
+            console.error(`Error ${actWord} project:`, error);
+            showToast(`Failed to ${actionWord} project`, 'Could not reach the server. Please try again.', 'error');
         } finally {
-            submitButton.disabled = false;
+            if (submitButton) submitButton.disabled = false;
         }
     }
 
     if (projectForm) {
         projectForm.addEventListener('submit', addProject);
+    }
+
+    // Handle the Global Delete Form Submission
+    const deleteForm = document.getElementById('global-delete-modal-form');
+    async function deleteProject(event) {
+        event.preventDefault(); 
+        
+        // Grab the form directly from the event target
+        const deleteForm = event.target;
+        const submitButton = deleteForm.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        
+        try {
+            // Send the POST request in the background using the action URL
+            const response = await fetch(deleteForm.action, {
+                method: 'POST',
+                body: new FormData(deleteForm) // Automatically includes the CSRF token
+            });
+            
+            if (response.ok) {
+                document.getElementById('global-delete-modal').hidePopover();
+                showToast('Success', 'Project deleted successfully!', 'success');
+                
+                const searchInput = document.getElementById('search-input');
+                fetchProjects(searchInput ? searchInput.value.trim() : "");
+            } else {
+                showToast('Failed to delete project', 'Something went wrong on the server.', 'error');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            showToast('Failed to delete project', 'Could not reach the server. Please try again.', 'error');
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', deleteProject);
     }
 
     // Fetch project data
@@ -243,13 +353,14 @@
             if (!response.ok) throw new Error('Failed to fetch data');
 
             const projectData = await response.json();
+            currentProjectsData = projectData;
 
             if (projectData.length === 0) {
                 displayPageSection({ showEmpty: true });
             } else {
                 gridContainer.innerHTML = '';
                 projectData.forEach(item => {
-                    gridContainer.appendChild(buildProjectCardElement(item));
+                    if (gridContainer) gridContainer.appendChild(buildProjectCardElement(item));
                 });
                 displayPageSection({ showGrid: true });
             }
@@ -262,7 +373,7 @@
 
     // Search form event handler
     function searchProjects() {
-        fetchProjects(searchInput.value.trim());
+        if (searchInput) fetchProjects(searchInput.value.trim());
     }
 
     searchInput.addEventListener("input", function() {
@@ -280,6 +391,10 @@
     });
 
     // Start the application
-    fetchProjects(searchInput.value.trim());
+    if (searchInput) {
+        fetchProjects(searchInput.value.trim());
+    } else {
+        fetchProjects("");
+    }
     </script>
 {% endblock content %}

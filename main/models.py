@@ -39,19 +39,9 @@ class Experience(models.Model):
 
 
 class Project(models.Model):
-    PROJECT_CHOICES = [
-        ("academic", "Academic Project"),
-        ("personal", "Personal Project"),
-    ]
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255)
     description = models.TextField()
-    category = models.CharField(
-        max_length=20,
-        choices=PROJECT_CHOICES,
-        default="personal",
-    )
     tech_stack = models.CharField(max_length=255, default="")
     project_url = models.URLField(blank=True)
     thumbnail = models.URLField(blank=True, null=True)
