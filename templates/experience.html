@@ -17,53 +17,36 @@
                         </a>
                     {% endif %}
                 </div>
-                <form method="get"
-                      action="{% url 'main:show_experience' %}"
-                      class="project-search">
+                
+                
+                <form id="experience-search-form" class="experience-search">
                     <input type="search"
+                           id="search-input"
                            name="title"
                            value="{{ title_query }}"
-                           placeholder="Search experience name"
-                           class="project-search__input"
-                           aria-label="Search experience name">
+                           placeholder="Search by experience name"
+                           class="experience-search__input"
+                           aria-label="Search by experience name">
                     <button type="submit" class="button">Search</button>
                 </form>
-                <div class="experience-grid project-grid">
-                    {% for experience in experience_list %}
-                        <article class="experience-card">
-                            {% if experience.thumbnail %}
-                                <img src="{{ experience.thumbnail }}"
-                                     alt="Picture {{ experience.title }}"
-                                     class="project-image">
-                            {% endif %}
-                            <h2>{{ experience.title }}</h2>
-                            <span class="experience-category">{{ experience.category }}</span>
-                            <p class="experience-description">{{ experience.description }}</p>
-                            <div class="project-card-actions">
-                                <div class="project-actions">
-                                    {% include "components/experience_star.html" with experience=experience %}
 
-                                    {% if user.is_superuser or le_editor %}
-                                        <a href="{% url 'main:edit_experience' experience.id %}" class="button button-secondary">
-                                            Edit
-                                        </a>
-                                    {% endif %}
-
-                                    {% if user.is_superuser %}
-                                        {% include "components/experience_delete_modal.html" with experience=experience %}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </article>
-                    {% empty %}
-                        {% if title_query %}
-                            <p class="empty-state">There is no experience with that name.</p>
-                        {% else %}
-                            <p class="empty-state">No experiences have been added yet.</p>
-                        {% endif %}
-                    {% endfor %}
+                <!-- Loading State -->
+                <div id="loading" class="empty-state hide">
+                    <p>Loading experiences...</p>
                 </div>
-            </div>
-        </section>
+
+                <!-- Error State -->
+                <div id="error" class="empty-state hide">
+                    <p>Failed to load experience data. Please try again.</p>
+                </div>
+
+                <!-- Empty State -->
+                <div id="empty" class="empty-state hide">
+                    <p>No experiences have been added or found yet.</p>
+                </div>
+
+                <!-- Experience Grid -->
+                <div id="grid" class="experience-grid project-grid hide"></div>
+
     </main>
 {% endblock content %}
