@@ -154,23 +154,23 @@ def show_experience(request):
     return render(request, "experience.html", context)
 
 
-@login_required(login_url="/login/")
-def create_experience(request):
+@require_POST
+def create_experience_ajax(request):
     if not request.user.is_superuser:
-        raise PermissionDenied
-     
-    form = ExperienceForm(request.POST or None)
+        return JsonResponse(
+            {"message": "Only the portfolio owner can add experiences."},
+            status=403,
+        )
 
-    if request.method == "POST" and form.is_valid():
-        form.save()
-        messages.success(request, "New Experience has been added!")
-        return redirect("main:show_experience")
+    form = ExperienceForm(request.POST)
+    if form.is_valid():
+        experience = form.save()
+        return JsonResponse(
+            {"message": "Experience added successfully.", "pk": str(experience.id)},
+            status=201,
+        )
 
-    context = {
-        "name": "Ranu",
-        "form": form,
-    }
-    return render(request, "experience_form.html", context)
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
 @login_required(login_url="/login/")
