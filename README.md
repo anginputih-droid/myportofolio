@@ -99,3 +99,26 @@ When a user's browser asks for the JSON data, the view function receives that re
 - **Prompt Strategy:** I began by giving Gemini the full assignment brief and the Tutorial 04 text so it had the exact requirements and the conventions my project already followed. When something didn't work, I pasted my real `views.py` and the `html` that's involved with the error along with a screenshot of the problem, so the answer was based on my actual code and not generic examples.
 - **Limitations & Manual Fixes:** The AI provided the backend logic and the `editor` helper function, but I manually integrate the logic into my views and apply the conditional checks within my HTML. I manually handled writing the `edit_experience` and `edit_project`.
 - **AI Chat Log:** https://share.gemini.google/qTaMxJ09qqUG
+
+
+### Assignment 5
+**1. Explain what debouncing is and why this technique is important to implement in a search feature that uses AJAX.**
+Debouncing means waiting until the user has stopped doing something for a short time before running a function. Every time a new character is typed, the old timer is cancelled and a new one starts, so the function only runs once the user pauses. This matters for AJAX search because without it every keystroke sends its own request, so typing "Django" would send six requests. That wastes server resources and bandwidth, and results can flicker or arrive in the wrong order. With a 300 ms delay, only one request is sent after the user finishes typing.
+
+**2. Explain the purpose of using await when we use fetch(). What would happen if we did not use await?**
+`await` makes the function wait until the Promise from `fetch()` is finished, so the next line gets the real `Response` object and not a pending Promise. Because of that, we can write async code that reads from top to bottom, like `const data = await response.json()`. Without `await`, `fetch()` returns right away and the code keeps running without waiting for the server. Then `response.ok` and `response.json()` don't work as expected, the page might try to render before the data arrives, and our `try-catch` wouldn't catch the errors properly.
+
+**3. Explain what a Cross-Site Scripting (XSS) attack is and why data displayed through AJAX/JavaScript is more vulnerable to this attack than data displayed directly through a Django template.**
+Cross-Site Scripting (XSS) is an attack where someone manages to put their own JavaScript into a page so it runs in other users' browsers. In stored XSS, the bad code is saved in the database, for example as a title, and runs every time that data is shown. It can steal things like the CSRF token and send requests as the victim. Django templates are safer because they automatically escape characters like `<` and `>`, so they show up as plain text. When we build HTML in JavaScript and insert it with `innerHTML`, that automatic escaping doesn't happen, so the browser treats tags in the data as real HTML. That's why we have to escape values ourselves with `escapeHtml` (or use `textContent`) and also clean the input on the server.
+
+**AI Usage Disclosure:** I used Gemini as a helper for coding and debugging in this assignment.
+
+- **Prompt Strategy:** 
+- I pasted my real code (`project.html`, `views.py`, the modal templates) so the answers fit my project and weren't generic.
+- I went one small step at a time, one feature or one error per message. I also asked follow-ups like "why do I need step 1?" and "what if I don't make it generic?" before changing anything.
+- When something broke, I described what I saw ("the edit button can't be clicked", "it adds another experience instead of saving") and sent screenshots of the error or the page.
+- I told it when I didn't like a suggestion. For example, I didn't want a separate edit page, so I went with the JavaScript modal approach (Option A), and I asked for a named `deleteProject` function instead of an anonymous listener.
+
+- **Limitations & Manual Fixes:** 
+
+- **AI Chat Log:** https://share.gemini.google/oOZqWXK7Sdas
