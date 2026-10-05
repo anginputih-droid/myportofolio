@@ -284,10 +284,10 @@
                 showToast('Failed to ${actWord} project', errorMessages.join(' '), 'error');
             }
         } catch (error) {
-            const errorWord = isEdit ? 'updating' : 'adding';
+            const actWord = isEdit ? 'updating' : 'adding';
             const actionWord = isEdit ? 'update' : 'add';
-            console.error('Error ${errorWord} project:', error);
-            showToast('Failed to ${actionWord} project', 'Could not reach the server. Please try again.', 'error');
+            console.error(`Error ${actWord} project:`, error);
+            showToast(`Failed to ${actionWord} project`, 'Could not reach the server. Please try again.', 'error');
         } finally {
             if (submitButton) submitButton.disabled = false;
         }
