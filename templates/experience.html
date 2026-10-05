@@ -27,7 +27,7 @@
                            value="{{ title_query }}"
                            placeholder="Search by experience name"
                            class="project-search__input"
-                           aria-label="Search by experience name">
+                           aria-label="Search by experience title">
                     <button type="submit" class="button">Search</button>
                 </form>
 
@@ -51,9 +51,14 @@
             </div>
         </section>
     </main>
+
+    {% if user.is_superuser %}
+        {% include "components/experience_form_modal.html" %}
+    {% endif %}
+
     <script>
     // Configuration
-    const BASE_EXPERIENCE_ENDPOINT = "{% url 'main:get_experience_json' %}";
+    const BASE_EXPERIENCES_ENDPOINT = "{% url 'main:get_experience_json' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     let experienceAbortController;
     const SEARCH_DEBOUNCE_DELAY = 300;
@@ -144,7 +149,7 @@
         try {
             displayPageSection({ showLoading: true });
             
-            const url = searchQuery ? `${BASE_EXPERIENCE_ENDPOINT}?title=${encodeURIComponent(searchQuery)}` : BASE_EXPERIENCE_ENDPOINT;
+            const url = searchQuery ? `${BASE_EXPERIENCES_ENDPOINT}?title=${encodeURIComponent(searchQuery)}` : BASE_EXPERIENCES_ENDPOINT;
             
             const response = await fetch(url, {
                 headers: { 'Accept': 'application/json' },
@@ -188,6 +193,10 @@
         clearTimeout(searchDebounceTimer);
         searchExperiences();
     });
+
+    function closeExperienceModal() {
+        document.getElementById("add-experience-modal").hidePopover();
+    }
 
     // Start the application
     fetchExperiences(searchInput.value.trim());
