@@ -52,17 +52,20 @@
         </section>
     </main>
 
-    {% if user.is_superuser %}
+    {% if user.is_superuser or le_editor %}
         {% include "components/experience_form_modal.html" %}
     {% endif %}
 
     <script>
     // Configuration
     const BASE_EXPERIENCES_ENDPOINT = "{% url 'main:get_experience_json' %}";
+    const CREATE_EXPERIENCE_ENDPOINT = "{% url 'main:create_experience_ajax' %}";
+    const EDIT_EXPERIENCE_BASE_URL = "{% url 'main:edit_experience_ajax' '00000000-0000-0000-0000-000000000000' %}";
+
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
+    const IS_EDITOR = "{{ le_editor|yesno:'true,false' }}" === "true";
     let experienceAbortController;
-    const SEARCH_DEBOUNCE_DELAY = 300;
-    let searchDebounceTimer;
+    let currentExperiencesData = [];
 
     // DOM elements
     const loadingState = document.getElementById('loading');
@@ -71,6 +74,10 @@
     const gridContainer = document.getElementById('grid');
     const searchForm = document.getElementById('experience-search-form');
     const searchInput = document.getElementById('search-input');
+    const experienceForm = document.getElementById('experience-form');
+    const addExperienceModal = document.getElementById("add-experience-modal");
+    const SEARCH_DEBOUNCE_DELAY = 300;
+    let searchDebounceTimer;
 
     // Show/hide page sections
     function displayPageSection({ showLoading = false, showError = false, showEmpty = false, showGrid = false }) {
@@ -89,7 +96,7 @@
             .replaceAll("'", '&#39;');
     }
 
-    // Build a project card element
+    // Build a Experience card element
     function buildExperienceCardElement(item) {
         const experience = item.fields;
         const experienceId = item.pk;
@@ -101,6 +108,10 @@
             ? `<img src="${escapeHtml(experience.thumbnail)}" alt="Image of ${escapeHtml(experience.title)}" class="project-image">`
             : '';
 
+        const editHtml = (IS_SUPERUSER || IS_EDITOR) 
+            ? `<button type="button" class="button button-secondary" onclick="openEditModal('${experienceId}')">Edit</button>`
+            : '';
+        
         // A dummy UUID used as a placeholder to be replaced with the real ID from the JSON data
         const deleteUrl = "{% url 'main:delete_experience' '00000000-0000-0000-0000-000000000000' %}"
             .replace('00000000-0000-0000-0000-000000000000', experienceId);
@@ -139,7 +150,7 @@
                             <span class="star-count">${experience.star_count}</span>
                         </button>
                     </form>
-
+                    ${editHtml}
                     ${deleteHtml}
                 </div>
             </div>
@@ -149,8 +160,44 @@
         return articleElement;
     }
 
-    const CREATE_EXPERIENCE_ENDPOINT = "{% url 'main:create_experience_ajax' %}";
-    const experienceForm = document.getElementById('experience-form');
+    const btnAdd = document.querySelector('.project-add-button');
+    if (btnAdd) {
+        btnAdd.addEventListener('click', () => {
+            if (!experienceForm) return;
+            experienceForm.reset();
+            experienceForm.dataset.mode = "create";
+            delete experienceForm.dataset.editId;
+            
+            const modalTitle = addExperienceModal.querySelector('h1, h2');
+            if (modalTitle) modalTitle.textContent = "Add a New Experience";
+            const submitBtn = experienceForm.querySelector('button[type="submit"]');
+            if (submitBtn) submitBtn.textContent = "Add Experience";
+        });
+    }
+
+    function openEditModal(experienceId) {
+        const item = currentExperiencesData.find(p => p.pk === experienceId);
+        if (!item) return;
+
+        document.getElementById('id_title').value = item.fields.title;
+        document.getElementById('id_description').value = item.fields.description;
+        document.getElementById('id_category').value = item.fields.category;
+        document.getElementById('id_thumbnail').value = item.fields.thumbnail || '';
+
+        experienceForm.dataset.mode = "edit";
+        experienceForm.dataset.editId = experienceId;
+
+        const modalTitle = addExperienceModal.querySelector('h1, h2');
+        if (modalTitle) modalTitle.textContent = "Edit Experience";
+        const submitBtn = experienceForm.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = "Save Changes";
+
+        if (addExperienceModal) addExperienceModal.showPopover();
+    }
+
+    function closeExperienceModal() {
+        if (addExperienceModal) addExperienceModal.hidePopover();
+    }
 
     // Read a cookie value, used to get the CSRF token
     function getCookie(name) {
@@ -175,8 +222,13 @@
         const submitButton = experienceForm.querySelector('button[type="submit"]');
         submitButton.disabled = true;
 
+        const isEdit = experienceForm.dataset.mode === "edit";
+        const targetUrl = isEdit 
+            ? EDIT_EXPERIENCE_BASE_URL.replace('00000000-0000-0000-0000-000000000000', experienceForm.dataset.editId)
+            : CREATE_EXPERIENCE_ENDPOINT;
+
         try {
-            const response = await fetch(CREATE_EXPERIENCE_ENDPOINT, {
+            const response = await fetch(targetUrl, {
                 method: 'POST',
                 headers: { 'X-CSRFToken': getCookie('csrftoken') },
                 body: new FormData(experienceForm),
@@ -186,17 +238,21 @@
             if (response.ok) {
                 experienceForm.reset();
                 closeExperienceModal();
-                showToast('Success', 'New experience added successfully!', 'success');
-                fetchExperiences(searchInput.value.trim());
+                const successMsg = isEdit ? 'Experience updated successfully!' : 'New experience added successfully!';
+                showToast('Success', successMsg, 'success');
+                fetchExperiences(searchInput ? searchInput.value.trim() : "");
             } else {
                 const errorMessages = result.errors
                     ? Object.values(result.errors).flat().map(error => error.message)
                     : [result.message || `Something went wrong (status ${response.status}).`];
-                showToast('Failed to add experience', errorMessages.join(' '), 'error');
+                const actWord = isEdit ? 'update' : 'add';
+                showToast(`Failed to ${actWord} experience`, errorMessages.join(' '), 'error');
             }
         } catch (error) {
-            console.error('Error adding experience:', error);
-            showToast('Failed to add experience', 'Could not reach the server. Please try again.', 'error');
+            const actWord = isEdit ? 'updating' : 'adding';
+            const actionWord = isEdit ? 'update' : 'add';
+            console.error(`Error ${actWord} experience:`, error);
+            showToast(`Failed to ${actionWord} experience`, 'Could not reach the server. Please try again.', 'error');
         } finally {
             submitButton.disabled = false;
         }
@@ -224,6 +280,7 @@
             if (!response.ok) throw new Error('Failed to fetch data');
 
             const experienceData = await response.json();
+            currentExperiencesData = experienceData;
 
             if (experienceData.length === 0) {
                 displayPageSection({ showEmpty: true });

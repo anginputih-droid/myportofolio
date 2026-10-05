@@ -273,7 +273,7 @@
             if (response.ok) {
                 projectForm.reset();
                 closeProjectModal();
-                const successMsg = isEdit ? 'Project updated successfully' : 'New project added successfully!';
+                const successMsg = isEdit ? 'Project updated successfully!' : 'New project added successfully!';
                 showToast('Success', successMsg, 'success');
                 fetchProjects(searchInput ? searchInput.value.trim() : "");
             } else {
@@ -281,7 +281,7 @@
                     ? Object.values(result.errors).flat().map(error => error.message)
                     : [result.message || `Something went wrong (status ${response.status}).`];
                 const actWord = isEdit ? 'update' : 'add';
-                showToast('Failed to ${actWord} project', errorMessages.join(' '), 'error');
+                showToast(`Failed to ${actWord} project`, errorMessages.join(' '), 'error');
             }
         } catch (error) {
             const actWord = isEdit ? 'updating' : 'adding';
