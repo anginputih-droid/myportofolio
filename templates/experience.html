@@ -55,6 +55,8 @@
     const BASE_EXPERIENCE_ENDPOINT = "{% url 'main:get_experience_json' %}";
     const IS_SUPERUSER = "{{ user.is_superuser|yesno:'true,false' }}" === "true";
     let experienceAbortController;
+    const SEARCH_DEBOUNCE_DELAY = 300;
+    let searchDebounceTimer;
 
     // DOM elements
     const loadingState = document.getElementById('loading');
@@ -168,10 +170,22 @@
         }
     }
 
-    // Search form event handler
-    searchForm.addEventListener('submit', function(e) {
-        e.preventDefault(); // Prevent the page from reloading
-        fetchExperiences(searchInput.value.trim()); // Run the search via AJAX
+    function searchExperiences() {
+        fetchExperiences(searchInput.value.trim());
+    }
+
+    searchInput.addEventListener("input", function() {
+        clearTimeout(searchDebounceTimer);
+
+        searchDebounceTimer = setTimeout(function() {
+            searchExperiences();
+        }, SEARCH_DEBOUNCE_DELAY);
+    });
+
+    searchForm.addEventListener("submit", function(event) {
+        event.preventDefault();
+        clearTimeout(searchDebounceTimer);
+        searchExperiences();
     });
 
     // Start the application
