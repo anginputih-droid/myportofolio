@@ -190,7 +190,7 @@ def get_experience_json(request):
     experiences = Experience.objects.prefetch_related('starred_by').all()
 
     if title_query:
-        experiences = experience.filter(title__icontains=title_query)
+        experiences = experiences.filter(title__icontains=title_query)
 
     # Manually build the JSON data so we can add the Star logic
     data = []
@@ -205,7 +205,7 @@ def get_experience_json(request):
                 "title": experience.title,
                 "description": experience.description,
                 "category": experience.category,
-                "thumbnail": project.thumbnail,
+                "thumbnail": experience.thumbnail,
                 "star_count": starred_users.count(),
                 "is_starred": is_starred,
                 "starred_by_names": starred_by_names,
