@@ -173,16 +173,26 @@ def create_experience_ajax(request):
     return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
+@require_POST
 @login_required(login_url="/login/")
-def edit_experience(request, experience_id):
+def edit_experience_ajax(request, experience_id):
     if not (request.user.is_superuser or le_editor(request.user)):
-        raise PermissionDenied
+        return JsonResponse(
+            {"message": "Permission denied."},
+            status=403,
+        )
 
     experience = get_object_or_404(Experience, pk=experience_id)
-    form = ExperienceForm(request.POST or None, instance=experience)
+    form = ExperienceForm(request.POST, instance=experience)
 
-    context = {"name": "Ranu", "form": form, "experience": experience}
-    return render(request, "experience_form.html", context)
+    if form.is_valid():
+        form.save()
+        return JsonResponse(
+            {"message": "Experience updated successfully."},
+            status=200,
+        )
+
+    return JsonResponse({"errors": form.errors.get_json_data()}, status=400)
 
 
 def get_experience_json(request):
