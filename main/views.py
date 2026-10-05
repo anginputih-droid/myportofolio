@@ -143,20 +143,13 @@ def toggle_star_project(request, project_id):
 
 ## Experience Section ##
 def show_experience(request):
-    json_response = get_experience_json(request)
-
-    experience = serializers.deserialize(
-        "json",
-        json_response.content.decode("utf-8"),
-    )
-    experience = [experience.object for experience in experience]
     title_query = request.GET.get("title", "").strip()
 
     context = {
         "name": "Ranu",
-        "experience_list": experience,
         "title_query": title_query,
-        "le_editor": le_editor(request.user)
+        "form": ExperienceForm(),
+        "le_editor": le_editor(request.user),
     }
     return render(request, "experience.html", context)
 
