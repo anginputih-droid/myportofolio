@@ -107,8 +107,8 @@
     function buildProjectCardElement(project) {
         const article = document.createElement('article');
         article.className = 'experience-card';
-        const image = project.project_image_url
-            ? `<img src="${escapeHtml(project.project_image_url)}" alt="${escapeHtml(project.title)}" class="project-image">` : '';
+        const image = project.thumbnail
+            ? `<img src="${escapeHtml(project.thumbnail)}" alt="${escapeHtml(project.title)}" class="project-image">` : '';
         const link = project.project_url
             ? `<a href="${escapeHtml(project.project_url)}" class="button">Open project</a>` : '';
         const star = IS_AUTHENTICATED
@@ -178,7 +178,7 @@
         try {
             const fields = new FormData(projectForm);
             const payload = Object.fromEntries([
-                'title', 'description', 'tech_stack', 'project_url', 'project_image_url',
+                'title', 'description', 'tech_stack', 'project_url', 'thumbnail',
             ].map(name => [name, fields.get(name)]));
             await writeProject(BASE_PROJECTS_ENDPOINT, 'POST', payload);
             projectForm.reset();
