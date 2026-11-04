@@ -117,3 +117,5 @@ class ExperienceForm(forms.ModelForm):
 
     def clean_description(self):
         return strip_tags(self.cleaned_data["description"]).strip()
+
+
