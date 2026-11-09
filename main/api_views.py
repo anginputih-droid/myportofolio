@@ -98,7 +98,7 @@ def experience_detail(request, experience_id):
         Experience.objects.prefetch_related("starred_by"), pk=experience_id,
     )
     if request.method in ("GET", "HEAD"):
-        serializer = ExperienceSerializer(project, context={"request": request})
+        serializer = ExperienceSerializer(experience, context={"request": request})
         return Response(serializer.data)
 
     if request.method == "DELETE":

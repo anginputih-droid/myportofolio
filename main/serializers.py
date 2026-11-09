@@ -25,7 +25,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         value = value.strip()
         if not value:
             raise serializers.ValidationError("Title cannot be empty.")
-        if strip_tags(value) != value
+        if strip_tags(value) != value:
             raise serializers.ValidationError("Title can't contain HTML tags.")
         return value
 
