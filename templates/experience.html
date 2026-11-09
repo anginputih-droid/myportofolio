@@ -132,7 +132,7 @@
                 data-id="${escapeHtml(experience.id)}">Edit</button>` : '';
         const remove = IS_SUPERUSER
             ? `<button type="button" class="button button-danger" data-action="delete"
-                data-id="${escapeHtml(experience.id)}">Delete Experience</button>` : '';
+                data-id="${escapeHtml(experience.id)}">Delete</button>` : '';
         article.innerHTML = `${image}<h2>${escapeHtml(experience.title)}</h2>
             <span class="experience-category">${escapeHtml(experience.category_display)}</span>
             <p class="experience-description">${escapeHtml(experience.description)}</p>
