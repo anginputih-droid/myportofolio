@@ -122,3 +122,25 @@ Cross-Site Scripting (XSS) is an attack where someone manages to put their own J
 - **Limitations & Manual Fixes:** 
 
 - **AI Chat Log:** https://share.gemini.google/oOZqWXK7Sdas
+
+
+### Assignment 6
+**1. Explain what REST means and why returning JSON alone isn't enough to call an API RESTful. Also explain the difference between PUT and PATCH, with an example of when each should be used.**
+REST is a way of designing an API. The data is treated as resources with their own URLs, for example `/api/v1/experience/` is the list of my experiences and `/api/v1/experience/<id>/` is one experience. To say what we want to do, we use the HTTP method (GET to read, POST to add, PUT/PATCH to update, DELETE to delete), and the server replies with the right status code like 201 or 404. Returning JSON doesn't automatically make it RESTful. My old Assignment 5 endpoints also returned JSON, but the action was written in the URL (like `/experience/<id>/delete/`) and everything was sent with POST. JSON is just the format of the data. PUT replaces the whole data, so I have to send all the required fields. PATCH only updates the fields I send. If I want to rewrite an experience completely I'd use PUT, but if I just want to fix a typo in the title, PATCH is easier because I only send the title.
+
+**2. Explain the role of a serializer in Django REST Framework. What are its advantages over manually assembling a dictionary with `JsonResponse` as in Tutorial 05?**
+A serializer changes my model objects into JSON when sending data, and also checks and changes the JSON from the request back into data that can be saved. In Tutorial 05 I had to write the dictionary myself in the view (with `pk` and `fields`), and the validation was in a separate form. With a serializer I only write the fields once in `Meta.fields`, and all my API views use it. The validation is also in the serializer (like `validate_title`), and if the input is wrong DRF sends a 400 with the error message for that field automatically. I can also make fields like `star_count` and `is_starred` read-only, so nobody can change them by sending their own value.
+
+**3. Explain the difference between authentication and authorization in Django REST Framework. Why must access rights be checked with a permission class on the server, rather than only by hiding a button in the template?**
+Authentication is checking who the user is. In my project `SessionAuthentication` does this using the session cookie, and then the user is in `request.user`. Authorization is checking what that user is allowed to do, which is done by the permission class. For Experience I use `IsPortfolioOwnerOrEditorOrReadOnly`, so everyone can read, Editors can only edit, and only I (the superuser) can add and delete. Hiding a button in the template only hides it from the page. Someone could still send the request directly, for example from the browser console with `fetch()` or from the Browsable API. If the server doesn't check the permission, that request would still work. That's why the check has to be on the server, so it returns 403 no matter where the request comes from.
+
+**4. Explain why requests that change data still need a CSRF token when an API uses `SessionAuthentication`. Why isn't a test using `force_authenticate` enough to prove that CSRF protection works?**
+When I'm logged in, the browser sends my session cookie with every request to my site, even if the request was triggered by another website. So without CSRF protection, another website could make my browser send a POST or DELETE to my API and the server would think it was me. The CSRF token prevents that because the other website can't get my token, so its request gets rejected with 403. That's why my JavaScript sends the `X-CSRFToken` header for every POST, PUT, PATCH and DELETE. `force_authenticate` in tests skips the login and also skips the CSRF check, so even a request without the token would pass. To actually test CSRF, I used `APIClient(enforce_csrf_checks=True)` and `.login()`, then checked that a request without the token gets 403.
+
+**AI Usage Disclosure:** I used Claude to help me with Tutorial 07 and this assignment.
+
+- **Prompt Strategy:** I asked it to help me apply the Tutorial 07 steps to my Experience section by asking about parts of the instructions that confused me. I also asked it to bring back the edit modal, delete modal and star badge on my Projects page using the new API, then do the same for my Experiences page.
+
+- **Limitations & Manual Fixes:** I chose the title error messages ("Title cannot be empty." and "Title can't contain HTML tags.") myself and added them to both serializers, and I added a 403 message to the Experience permission. While typing the code I made a few mistakes (a missing `:` and using `project` instead of `experience` in the detail view) and fixed them after the check. I also wanted Editors to be able to edit Projects, but that would break the Tutorial 07 test, so I kept Projects owner-only.
+
+- **AI Chat Log:** https://claude.ai/share/f567036b-7995-40ec-a1c3-bb0bd86d9a20
