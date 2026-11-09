@@ -76,8 +76,12 @@
     const searchForm = document.getElementById('project-search-form');
     const searchInput = document.getElementById('search-input');
     const projectForm = document.getElementById('project-form');
+    const addProjectModal = document.getElementById('add-project-modal');
+    const deleteModal = document.getElementById('global-delete-modal');
+    const deleteForm = document.getElementById('global-delete-modal-form');
     let projectsAbortController;
     let searchDebounceTimer;
+    let currentProjects = [];
 
     function getCookie(name) {
         const prefix = `${name}=`;
@@ -111,12 +115,21 @@
             ? `<img src="${escapeHtml(project.thumbnail)}" alt="${escapeHtml(project.title)}" class="project-image">` : '';
         const link = project.project_url
             ? `<a href="${escapeHtml(project.project_url)}" class="button">Open project</a>` : '';
+        const starTitle = project.star_count > 0
+            ? `Starred by ${escapeHtml(project.starred_by_names)}`
+            : 'Be the first to star';
         const star = IS_AUTHENTICATED
             ? `<button type="button" class="button button-star${project.is_starred ? ' is-starred' : ''}"
-                data-action="star" data-id="${escapeHtml(project.id)}"
-                title="${escapeHtml(project.starred_by_names)}">
-                ${project.is_starred ? 'Unstar' : 'Star'} (${project.star_count})</button>`
-            : `<a href="{% url 'main:login' %}" class="button">Login to star (${project.star_count})</a>`;
+                data-action="star" data-id="${escapeHtml(project.id)}" title="${starTitle}">
+                <span aria-hidden="true">★</span>
+                ${project.is_starred ? 'Unstar' : 'Star'}
+                <span class="star-count">${project.star_count}</span></button>`
+            : `<a href="{% url 'main:login' %}" class="button" title="${starTitle}">
+                <span aria-hidden="true">★</span> Login to star
+                <span class="star-count">${project.star_count}</span></a>`;
+        const edit = IS_SUPERUSER
+            ? `<button type="button" class="button button-secondary" data-action="edit"
+                data-id="${escapeHtml(project.id)}">Edit</button>` : '';
         const remove = IS_SUPERUSER
             ? `<button type="button" class="button button-danger" data-action="delete"
                 data-id="${escapeHtml(project.id)}">Delete</button>` : '';
@@ -124,7 +137,7 @@
             <span class="experience-category">${escapeHtml(project.tech_stack)}</span>
             <p class="experience-description">${escapeHtml(project.description)}</p>
             <div class="project-card-actions"><div class="project-actions">
-            ${link}${star}${remove}</div></div>`;
+            ${link}${star}${edit}${remove}</div></div>`;
         return article;
     }
 
@@ -141,6 +154,7 @@
             });
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const projects = await response.json();
+            currentProjects = projects;
             gridContainer.replaceChildren(...projects.map(buildProjectCardElement));
             displayPageSection({ showGrid: projects.length > 0, showEmpty: projects.length === 0 });
         } catch (error) {
@@ -171,40 +185,104 @@
         return data;
     }
 
-    async function addProject(event) {
+    const PROJECT_FIELDS = ['title', 'description', 'tech_stack', 'project_url', 'thumbnail'];
+
+    // Switch the shared modal between "add" and "edit" mode
+    function setFormMode(mode, projectId = null) {
+        projectForm.dataset.mode = mode;
+        if (projectId) projectForm.dataset.editId = projectId;
+        else delete projectForm.dataset.editId;
+        const isEdit = mode === 'edit';
+        addProjectModal.querySelector('h2').textContent = isEdit ? 'Edit Project' : 'Add a New Project';
+        projectForm.querySelector('button[type="submit"]').textContent = isEdit ? 'Save Changes' : 'Add Project';
+    }
+
+    function openEditModal(projectId) {
+        const project = currentProjects.find(item => item.id === projectId);
+        if (!project) return;
+        PROJECT_FIELDS.forEach(name => {
+            document.getElementById(`id_${name}`).value = project[name] || '';
+        });
+        setFormMode('edit', projectId);
+        addProjectModal.showPopover();
+    }
+
+    function openDeleteModal(projectId) {
+        const project = currentProjects.find(item => item.id === projectId);
+        if (!project) return;
+        // textContent (not innerHTML), so the title is shown as plain text
+        document.getElementById('global-delete-modal-project-title').textContent = project.title;
+        deleteForm.dataset.deleteId = projectId;
+        deleteModal.showPopover();
+    }
+
+    // Add (POST to the list URL) or edit (PATCH to the detail URL)
+    async function saveProject(event) {
         event.preventDefault();
+        const isEdit = projectForm.dataset.mode === 'edit';
         const button = projectForm.querySelector('button[type="submit"]');
         button.disabled = true;
         try {
             const fields = new FormData(projectForm);
-            const payload = Object.fromEntries([
-                'title', 'description', 'tech_stack', 'project_url', 'thumbnail',
-            ].map(name => [name, fields.get(name)]));
-            await writeProject(BASE_PROJECTS_ENDPOINT, 'POST', payload);
+            const payload = Object.fromEntries(PROJECT_FIELDS.map(name => [name, fields.get(name)]));
+            if (isEdit) {
+                await writeProject(projectEndpoint(DETAIL_PROJECT_ENDPOINT, projectForm.dataset.editId),
+                    'PATCH', payload);
+            } else {
+                await writeProject(BASE_PROJECTS_ENDPOINT, 'POST', payload);
+            }
             projectForm.reset();
-            document.getElementById('add-project-modal').hidePopover();
-            showToast('Success', 'Project created.', 'success');
+            setFormMode('create');
+            addProjectModal.hidePopover();
+            showToast('Success', isEdit ? 'Project updated.' : 'Project created.', 'success');
             await fetchProjects(searchInput.value.trim());
         } catch (error) {
-            showToast('Could not create project', error.message, 'error');
+            showToast(isEdit ? 'Could not update project' : 'Could not create project', error.message, 'error');
         } finally {
             button.disabled = false;
         }
     }
 
-    if (projectForm) projectForm.addEventListener('submit', addProject);
+    if (projectForm) projectForm.addEventListener('submit', saveProject);
+
+    // The "+ Add Project" button opens the same modal, so reset it to add mode first
+    const addButton = document.querySelector('.project-add-button');
+    if (addButton && projectForm) {
+        addButton.addEventListener('click', () => {
+            projectForm.reset();
+            setFormMode('create');
+        });
+    }
+
+    // "Yes, Delete" in the delete modal sends DELETE to the API
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const button = deleteForm.querySelector('button[type="submit"]');
+            button.disabled = true;
+            try {
+                await writeProject(projectEndpoint(DETAIL_PROJECT_ENDPOINT, deleteForm.dataset.deleteId), 'DELETE');
+                deleteModal.hidePopover();
+                showToast('Success', 'Project deleted.', 'success');
+                await fetchProjects(searchInput.value.trim());
+            } catch (error) {
+                showToast('Could not delete project', error.message, 'error');
+            } finally {
+                button.disabled = false;
+            }
+        });
+    }
 
     gridContainer.addEventListener('click', async function(event) {
         const button = event.target.closest('button[data-action]');
         if (!button || button.disabled) return;
         const action = button.dataset.action;
-        if (action === 'delete' && !window.confirm('Delete this project?')) return;
+        if (action === 'edit') return openEditModal(button.dataset.id);
+        if (action === 'delete') return openDeleteModal(button.dataset.id);
         button.disabled = true;
         try {
-            const pattern = action === 'star' ? STAR_PROJECT_ENDPOINT : DETAIL_PROJECT_ENDPOINT;
-            await writeProject(projectEndpoint(pattern, button.dataset.id),
-                action === 'star' ? 'POST' : 'DELETE');
-            showToast('Success', action === 'star' ? 'Star updated.' : 'Project deleted.', 'success');
+            await writeProject(projectEndpoint(STAR_PROJECT_ENDPOINT, button.dataset.id), 'POST');
+            showToast('Success', 'Star updated.', 'success');
             await fetchProjects(searchInput.value.trim());
         } catch (error) {
             showToast('Request failed', error.message, 'error');
