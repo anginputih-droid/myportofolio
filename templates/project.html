@@ -137,7 +137,8 @@
             <span class="experience-category">${escapeHtml(project.tech_stack)}</span>
             <p class="experience-description">${escapeHtml(project.description)}</p>
             <div class="project-card-actions"><div class="project-actions">
-            ${link}${star}${edit}${remove}</div></div>`;        return article;
+            ${link}${star}${edit}${remove}</div></div>`;
+        return article;
     }
 
     async function fetchProjects(searchQuery = '') {
