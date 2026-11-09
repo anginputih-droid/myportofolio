@@ -12,6 +12,7 @@ class IsPortfolioOwnerOrReadOnly(BasePermission):
 
 
 class IsPortfolioOwnerOrEditorOrReadOnly(BasePermission):
+    message = "Only the owner can add or delete. Editors can only edit."
     def has_permission(self, request, view):
         if request.method in SAFE_METHODS:
             return True
