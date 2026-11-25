@@ -295,13 +295,13 @@ h1, .brand {
   padding: 14px 28px;
   font-size: 1rem;
   cursor: pointer;
-  border-color: #04AA6D;
-  color: green;
+  border-color: rgba(68, 5, 204, 0.663);
+  color: rgb(64, 0, 168);
   transition: all 0.2s ease;
 }
 
 .dropsqr:hover {
-    background-color: #04AA6D;
+    background-color: var(--accent);
     color: white;
 }
 
@@ -337,7 +337,7 @@ h1, .brand {
 .dropdown:hover .dropdown-content {display: block;}
 
 /* Change the background color of the dropdown button when the dropdown content is shown */
-.dropdown:hover .dropsqr {background-color: #3e8e41;}
+.dropdown:hover .dropsqr {background-color: rgba(94, 20, 243, 0.751);}
 
 
 /* Experience */
