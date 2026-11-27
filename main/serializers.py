@@ -59,7 +59,7 @@ class ExperienceSerializer(serializers.ModelSerializer):
         model = Experience
         fields = [
             "id", "title", "description", "category", "category_display", 
-            "thumbnail", "star_count", "is_starred", "starred_by_names",
+            "thumbnail", "started_at", "ended_at", "star_count", "is_starred", "starred_by_names",
         ]
         read_only_fields = ["id"]
         extra_kwargs = {
@@ -79,6 +79,16 @@ class ExperienceSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError("Description cannot be empty.")
         return value
+
+    def validate(self, data):
+        # On PATCH a date may be missing from data, so fall back to the saved one.
+        started_at = data.get("started_at", getattr(self.instance, "started_at", None))
+        ended_at = data.get("ended_at", getattr(self.instance, "ended_at", None))
+        if started_at and ended_at and ended_at < started_at:
+            raise serializers.ValidationError(
+                {"ended_at": "End date can't be before the start date."}
+            )
+        return data
 
     def get_star_count(self, obj):
         return obj.starred_by.count()

@@ -233,6 +233,31 @@ class ExperienceAPITest(APITestCase):
             self.assertIn(field, response.data)
         self.assertEqual(Experience.objects.count(), 1)
 
+    def test_owner_can_create_with_dates(self):
+        self.client.force_authenticate(user=self.owner)
+        payload = {
+            **self.payload,
+            "started_at": "2025-08-01T00:00:00Z",
+            "ended_at": "2026-01-31T00:00:00Z",
+        }
+        response = self.client.post(self.list_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        saved = Experience.objects.get(pk=response.data["id"])
+        self.assertEqual(saved.started_at.year, 2025)
+        self.assertEqual(saved.ended_at.month, 1)
+
+    def test_end_date_before_start_date_is_rejected(self):
+        self.client.force_authenticate(user=self.owner)
+        payload = {
+            **self.payload,
+            "started_at": "2026-01-31T00:00:00Z",
+            "ended_at": "2025-08-01T00:00:00Z",
+        }
+        response = self.client.post(self.list_url, payload, format="json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("ended_at", response.data)
+        self.assertEqual(Experience.objects.count(), 1)
+
     def test_title_error_messages(self):
         self.client.force_authenticate(user=self.owner)
         response = self.client.post(self.list_url, {**self.payload, "title": "   "}, format="json")
